@@ -10,8 +10,32 @@ const initialimage = `url(https://media.istockphoto.com/id/919833976/vector/clou
 
 function App() {
   const [search, setSearch] = useState('');
-  const [weather, setWeather] = useState( { } );
+  const [weather, setWeather] = useState([]);
   const [backgroundImage, setBackgroundImage] = useState(initialimage);
+
+  const fetchWeatherData = (city) => {
+    const normalizedCity = city.toLowerCase();
+    const cachedData = localStorage.getItem(normalizedCity);
+
+    if (cachedData) {
+      setWeather(JSON.parse(cachedData));
+    } else {
+      fetch(`${api.base}weather?q=${city}&appid=${api.key}`)
+        .then(res => res.json())
+        .then(result => {
+          if (result.cod === 200) {
+            setWeather(result);
+            // Cache the data
+            localStorage.setItem(normalizedCity, JSON.stringify(result));
+          } else {
+            alert('City not found');
+          }
+        })
+        .catch(error => {
+          alert('Error fetching weather data:', error);
+        });
+    }
+  };
 
   const SearchPress = (e) => {
     e.preventDefault();
@@ -19,16 +43,7 @@ function App() {
       alert('Enter city/town name');
       return;
     }
-
-    fetch(`${api.base}weather?q=${search}&appid=${api.key}`)
-      .then(res => res.json())
-      .then(result => {
-        setWeather(result);
-        console.log(result);
-      })
-      .catch(error => {
-        alert('Error fetching weather data:', error);
-      });
+    fetchWeatherData(search); // Fetch weather data on button click
   }
 
   const setBackgroundImageByWeather = () => {
@@ -49,21 +64,15 @@ function App() {
         case 'thunderstorm':
           imageUrl = 'url(https://plus.unsplash.com/premium_photo-1664298006973-e98eb94d006c?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)';
           break;
-
         case 'haze':
           imageUrl = 'url(https://www.metoffice.gov.uk/binaries/content/gallery/metofficegovuk/hero-images/weather/fog--mist/foggy-morning-in-a-meadow.jpg)';
           break;
-
         case "snow":
-          imageUrl = `url(https://img.freepik.com/free-photo/3d-snowy-landscape_1048-9385.jpg)`
+          imageUrl = `url(https://img.freepik.com/free-photo/3d-snowy-landscape_1048-9385.jpg)`;
           break;
-
         case "smoke":
-          imageUrl = `url(https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjgaoRu6tKkXt9tj3aqBdeObBH54VH77LQ6Cuq0YP9ejJ_WKOwaF-IxBDy172bFEBJ0Vsyrh8bXEkntz02HfxDoELkFI47-cavgSi6kj6Bo3OVdAjrUjnGYfHmYMQ0o-8ARUSOsbYU_ct8/s1600/Screen+Shot+2020-09-11+at+9.16.03+AM.png)`
+          imageUrl = `url(https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjgaoRu6tKkXt9tj3aqBdeObBH54VH77LQ6Cuq0YP9ejJ_WKOwaF-IxBDy172bFEBJ0Vsyrh8bXEkntz02HfxDoELkFI47-cavgSi6kj6Bo3OVdAjrUjnGYfHmYMQ0o-8ARUSOsbYU_ct8/s1600/Screen+Shot+2020-09-11+at+9.16.03+AM.png)`;
           break;
-
-
-
         default:
           imageUrl = 'url(https://t3.ftcdn.net/jpg/04/40/06/92/360_F_440069273_2lStitbQvoaYnzBJyO1PxBqjPbdFOMeH.jpg)';
           break;
@@ -91,9 +100,9 @@ function App() {
         </div>
         <div className='lowerpart'>
           {weather.name ? (
-            <div className='lowertwo' >
+            <div className='lowertwo'>
               <p>{weather.name}</p>
-              <p>{weather.main?.temp ? `${(weather.main.temp-273.15).toFixed(2)}°C` : ""}</p>
+              <p>{weather.main?.temp ? `${(weather.main.temp - 273.15).toFixed(2)}°C` : ""}</p>
               <p>{weather.weather[0].main}</p>
             </div>
           ) : (
